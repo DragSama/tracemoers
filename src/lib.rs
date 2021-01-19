@@ -6,7 +6,7 @@ pub mod errors;
 
 use types::{Me, DataType, Search};
 use errors::Error;
-use std::{fs::read, result};
+use std::{fs::{read, File}, result, path::Path};
 
 pub struct Client {
     pub baseurl: String,
@@ -47,7 +47,20 @@ impl Client {
             Err(e) => return Err(Error::JsonParsingError(e))
         };
     }
-
+    pub async fn save(&mut self, preview_type: PreviewType, path: &str) -> Result<()>{
+        let url = match preview_type {
+            PreviewType::Natural => format!("{}video/{}/{}?t={}&token={}", self.mediaurl, self.anilist_id, self.filename, self.at, self.tokenthumb),
+            PreviewType::Image => format!("{}/thumbnail.php?anilist_id={}&file={}&t={}&token={}", self.baseurl, self.anilist_id, self.filename, self.at, self.tokenthumb)
+        }
+        let path = Path::new(path);
+        let file = File::create(&path);
+        let bytes = match self.req_client.get(&url).send().await {
+            Ok(resp) => resp::bytes,
+            Err(e) => return Err(Error::ReqwestError(e))
+        };
+        file.write_all(bytes);
+        Ok(())
+    }
     pub async fn search(&mut self, data: DataType) -> Result<Search> {
         let req_url = if self.token.is_some(){
             format!("{}{}{}", self.baseurl, "/search?token=", self.token.as_ref().unwrap())
