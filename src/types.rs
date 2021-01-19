@@ -1,9 +1,16 @@
 use serde::Deserialize;
+use crate::errors::Error;
 
 #[derive(Debug)]
 pub enum DataType {
     URL (String),
     File (String)
+}
+
+#[derive(Debug)]
+pub enum PreviewType {
+    Natural,
+    Image
 }
 
 #[derive(Deserialize, Debug)]
